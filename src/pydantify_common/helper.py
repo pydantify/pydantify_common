@@ -9,6 +9,11 @@ def model_dump_xml_string(
     data = model.model_dump_xml()
     if data_root:
         # Add `<data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">` root element
-        pass
+        root = etree.Element(
+            "data",
+            nsmap={None: "urn:ietf:params:xml:ns:netconf:base:1.0"},
+        )
+        root.append(data)
+        data = root
 
     return etree.tostring(data, encoding=str, pretty_print=pretty_print)
