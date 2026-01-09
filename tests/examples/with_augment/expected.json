@@ -1,0 +1,28 @@
+{
+    "configuration": {
+        "devicename": "sw01",
+        "namespaces": [
+            {
+                "name": "ns1",
+                "interfaces": [
+                    {
+                        "name": "GigabitEthernet0/0/0",
+                        "ip": "::1"
+                    }
+                ]
+            },
+            {
+                "name": "ns2",
+                "interfaces": [
+                    {
+                        "name": "GigabitEthernet0/0/1",
+                        "ip": "::1"
+                    },
+                    {
+                        "name": "GigabitEthernet0/0/2"
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <configuration xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-configuration">
+        <devicename>sw01</devicename>
+        <namespaces xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-namespaces">
+            <name>ns1</name>
+            <interfaces xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-interfaces">
+                    <name>GigabitEthernet0/0/0</name>
+                    <ip>::1</ip>
+            </interfaces>
+        </namespaces>
+        <namespaces xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-namespaces">
+            <name>ns2</name>
+            <interfaces xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-interfaces">
+                <name>GigabitEthernet0/0/1</name>
+                <ip>::1</ip>
+            </interfaces>
+            <interfaces xmlns="http://pydantify.github.io/ns/yang/pydantify-multimodel-interfaces">
+                <name>GigabitEthernet0/0/2</name>
+            </interfaces>
+        </namespaces>
+    </configuration>
+</data>
