@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, List, ClassVar
 
-from pydantic import ConfigDict, Field, RootModel
+from pydantic import ConfigDict, Field
 from pydantify_common.model import XMLPydantifyModel
 
 

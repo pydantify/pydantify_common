@@ -1,7 +1,10 @@
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 from pydantic import BaseModel
 from lxml import etree
+
+if TYPE_CHECKING:
+    from lxml.etree import _Element
 
 
 class PydantifyModel(BaseModel):
@@ -12,18 +15,18 @@ class XMLPydantifyModel(PydantifyModel):
     namespace: ClassVar[str]
     prefix: ClassVar[str]
 
-    def model_dump_xml(self) -> etree.Element:
+    def model_dump_xml(self) -> "_Element":
         data = self.fields_to_elements()
         return list(data)[0]
 
     def fields_to_elements(
         self,
         container_name: str | None = None,
-    ) -> list[etree.Element]:
+    ) -> "_Element":
         if container_name:
             root = etree.Element(
                 container_name,
-                nsmap={None: self.namespace},
+                nsmap={None: self.namespace},  # type: ignore
             )
         else:
             root = etree.Element("root")
