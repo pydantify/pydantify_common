@@ -1,6 +1,5 @@
 from lxml import etree
 from .model import XMLPydantifyModel
-from typing import Any
 
 
 def model_dump_xml_string(
@@ -11,7 +10,7 @@ def model_dump_xml_string(
         # Add `<data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">` root element
         root = etree.Element(
             "data",
-            nsmap={None: "urn:ietf:params:xml:ns:netconf:base:1.0"},
+            nsmap={None: "urn:ietf:params:xml:ns:netconf:base:1.0"},  # type: ignore
         )
         root.append(data)
         data = root
