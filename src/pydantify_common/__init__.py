@@ -1,2 +1,3 @@
-def hello() -> str:
-    return "Hello from pydantify-common!"
+from .model import PydantifyModel
+
+__all__ = ["PydantifyModel"]
