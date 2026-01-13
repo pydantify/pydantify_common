@@ -1,5 +1,4 @@
 from pathlib import Path
-from pydantify_common.model import XMLPydantifyModel
 from pydantify_common.helper import model_dump_xml_string
 from lxml import etree
 
