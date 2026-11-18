@@ -83,6 +83,27 @@ xml_str = model_dump_xml_string(
 # Output: <data><System><config><MyModel>...</MyModel></config></System></data>
 ```
 
+### NETCONF Operations
+
+Add NETCONF operation attributes (`operation="replace"`, etc.) by modifying the Element after serialization:
+
+```python
+from lxml import etree
+from pydantify_common import model_dump_xml
+
+# Get Element object
+element = model_dump_xml(model, data_root=True)
+
+# Add operation attribute to specific elements
+monitor_items = element.find('monitor-items')
+if monitor_items is not None:
+    monitor_items.set('operation', 'replace')
+
+# Serialize to string
+xml_str = etree.tostring(element, encoding=str, pretty_print=True)
+# Output: <monitor-items operation="replace">...</monitor-items>
+```
+
 ## API Reference
 
 ### PydantifyModel
