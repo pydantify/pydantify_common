@@ -2,7 +2,7 @@ from pathlib import Path
 
 from lxml import etree
 
-from pydantify_common.helper import XmlWrapper, model_dump_xml_string
+from pydantify_common.helper import XmlWrapper, model_dump_xml, model_dump_xml_string
 
 
 def test_augment_xml_dump():
@@ -158,7 +158,7 @@ def test_wrappers_xml_dump():
         )
     )
 
-    xml_string = model_dump_xml_string(
+    element = model_dump_xml(
         model,
         data_root=True,
         wrappers=[
@@ -167,11 +167,47 @@ def test_wrappers_xml_dump():
         ],
     )
 
-    parser = etree.XMLParser(remove_blank_text=True)
-    tree = etree.fromstring(xml_string.encode(), parser)
-
     # Verify structure: <data><System><config><sessions>...
-    assert tree.tag == "{urn:ietf:params:xml:ns:netconf:base:1.0}data"
-    assert tree[0].tag == "{http://example.com/ns/yang/demo}System"
-    assert tree[0][0].tag == "{http://example.com/ns/yang/demo}config"
-    assert tree[0][0][0].tag == "{http://example.com/ns/yang/demo}sessions"
+    assert element.tag == "data"
+    assert element.nsmap[None] == "urn:ietf:params:xml:ns:netconf:base:1.0"
+    assert element[0].tag == "System"
+    assert element[0].nsmap[None] == NS
+    assert element[0][0].tag == "config"
+    assert element[0][0][0].tag == "sessions"
+
+
+def test_model_dump_xml_element():
+    """Test model_dump_xml returns Element object for direct manipulation."""
+    from examples.with_enums_defaults.model import (
+        Model,
+        SessionsContainer,
+        SessionListEntry,
+        NS,
+    )
+
+    model = Model(
+        sessions=SessionsContainer(
+            session_list=[SessionListEntry(id=99, description="element test")]
+        )
+    )
+
+    # Get Element directly with wrapper
+    element = model_dump_xml(
+        model,
+        data_root=True,
+        wrappers=[XmlWrapper("System", NS)],
+    )
+
+    # Element is directly usable - check tag name and namespace
+    assert element.tag == "data"
+    assert element.nsmap[None] == "urn:ietf:params:xml:ns:netconf:base:1.0"
+    assert len(element) == 1
+    assert element[0].tag == "System"
+    assert element[0].nsmap[None] == NS
+
+    # Can add attributes before serializing
+    element[0].set("version", "1.0")
+    xml_str = etree.tostring(element, encoding=str)
+    assert 'version="1.0"' in xml_str
+    assert "<data" in xml_str
+    assert "<System" in xml_str

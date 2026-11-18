@@ -1,15 +1,57 @@
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from lxml import etree
 
 from .model import XMLPydantifyModel
 
+if TYPE_CHECKING:
+    from lxml.etree import _Element
+
 
 class XmlWrapper(NamedTuple):
-    """An XML wrapper element with tag name and namespace."""
-
     tag: str
     namespace: str
+
+
+def model_dump_xml(
+    model: XMLPydantifyModel,
+    *,
+    data_root: bool = False,
+    wrappers: list[XmlWrapper] | None = None,
+) -> "_Element":
+    """Serialize model to lxml Element.
+
+    Args:
+        model: The model to serialize.
+        data_root: Wrap in NETCONF ``<data>`` root element.
+        wrappers: Wrapper elements to nest the model in, specified outermost-first.
+            Example: ``[XmlWrapper("System", "http://...")]`` produces
+            ``<System><model-root/></System>``.
+
+    Returns:
+        lxml Element.
+    """
+    element = model.model_dump_xml()
+
+    # Apply wrappers innermost-to-outermost (reverse of input order)
+    if wrappers:
+        for wrapper in reversed(wrappers):
+            parent = etree.Element(
+                wrapper.tag,
+                nsmap={None: wrapper.namespace},  # type: ignore[dict-item]
+            )
+            parent.append(element)
+            element = parent
+
+    if data_root:
+        root = etree.Element(
+            "data",
+            nsmap={None: "urn:ietf:params:xml:ns:netconf:base:1.0"},  # type: ignore[dict-item]
+        )
+        root.append(element)
+        element = root
+
+    return element
 
 
 def model_dump_xml_string(
@@ -32,24 +74,5 @@ def model_dump_xml_string(
     Returns:
         XML string.
     """
-    element = model.model_dump_xml()
-
-    # Apply wrappers innermost-to-outermost (reverse of input order)
-    if wrappers:
-        for wrapper in reversed(wrappers):
-            parent = etree.Element(
-                wrapper.tag,
-                nsmap={None: wrapper.namespace},  # type: ignore[dict-item]
-            )
-            parent.append(element)
-            element = parent
-
-    if data_root:
-        root = etree.Element(
-            "data",
-            nsmap={None: "urn:ietf:params:xml:ns:netconf:base:1.0"},  # type: ignore[dict-item]
-        )
-        root.append(element)
-        element = root
-
+    element = model_dump_xml(model, data_root=data_root, wrappers=wrappers)
     return etree.tostring(element, encoding=str, pretty_print=pretty_print)

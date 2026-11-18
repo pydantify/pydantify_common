@@ -115,9 +115,29 @@ class XmlWrapper(NamedTuple):
     namespace: str  # XML namespace URI
 ```
 
+### model_dump_xml()
+
+Serialize model to lxml Element for direct manipulation.
+
+```python
+def model_dump_xml(
+    model: XMLPydantifyModel,
+    *,
+    data_root: bool = False,
+    wrappers: list[XmlWrapper] | None = None
+) -> Element
+```
+
+**Parameters:**
+- `model`: The XMLPydantifyModel instance to serialize
+- `data_root`: Add NETCONF-compatible `<data>` root element (default: False)
+- `wrappers`: Optional list of wrapper elements, specified outermost-first (default: None)
+
+**Returns:** lxml `Element` object
+
 ### model_dump_xml_string()
 
-Helper function to serialize XMLPydantifyModel instances to XML strings.
+Serialize model to XML string (calls `model_dump_xml()` internally).
 
 ```python
 def model_dump_xml_string(
