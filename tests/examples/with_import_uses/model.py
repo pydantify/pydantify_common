@@ -19,11 +19,11 @@ class InterfacesListEntry(XMLPydantifyModel):
         "http://pydantify.github.io/ns/yang/pydantify-multimodel-configuration"
     )
     prefix: ClassVar[str] = "configuration"
-    name: Annotated[str, Field(alias="configuration:name")]
+    name: Annotated[str, Field(serialization_alias="configuration:name")]
     """
     Interface name. Example value: GigabitEthernet 0/0/0
     """
-    ip: Annotated[str | None, Field(alias="configuration:ip")] = None
+    ip: Annotated[str | None, Field(serialization_alias="configuration:ip")] = None
     """
     Interface IP
     """
@@ -42,13 +42,13 @@ class NamespacesListEntry(XMLPydantifyModel):
         "http://pydantify.github.io/ns/yang/pydantify-multimodel-configuration"
     )
     prefix: ClassVar[str] = "configuration"
-    name: Annotated[str, Field(alias="configuration:name")]
+    name: Annotated[str, Field(serialization_alias="configuration:name")]
     """
     Interface name. Example value: GigabitEthernet 0/0/0
     """
     interfaces: Annotated[
         List[InterfacesListEntry],
-        Field(default_factory=list, alias="configuration:interfaces"),
+        Field(default_factory=list, serialization_alias="configuration:interfaces"),
     ]
 
 
@@ -65,13 +65,13 @@ class ConfigurationContainer(XMLPydantifyModel):
         "http://pydantify.github.io/ns/yang/pydantify-multimodel-configuration"
     )
     prefix: ClassVar[str] = "configuration"
-    devicename: Annotated[str, Field(alias="configuration:devicename")]
+    devicename: Annotated[str, Field(serialization_alias="configuration:devicename")]
     """
     Device name. Example value: sw01
     """
     namespaces: Annotated[
         List[NamespacesListEntry],
-        Field(default_factory=list, alias="configuration:namespaces"),
+        Field(default_factory=list, serialization_alias="configuration:namespaces"),
     ]
 
 
@@ -100,7 +100,7 @@ class Model(XMLPydantifyModel):
     )
     prefix: ClassVar[str] = "configuration"
     configuration: Annotated[
-        ConfigurationContainer, Field(alias="configuration:configuration")
+        ConfigurationContainer, Field(serialization_alias="configuration:configuration")
     ]
 
 

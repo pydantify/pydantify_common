@@ -51,6 +51,40 @@ def test_augment_xml_dump():
     assert etree.tostring(generated_tree) == etree.tostring(expected_tree)
 
 
+def test_enums_defaults_xml_dump():
+    from examples.with_enums_defaults.model import (
+        Model,
+        SessionsContainer,
+        SessionListEntry,
+        StateLeaf,
+        StateType,
+        StateEnum,
+    )
+
+    model = Model(
+        sessions=SessionsContainer(
+            session_list=[
+                SessionListEntry(
+                    id=10,
+                    config_state=StateLeaf(StateType(StateEnum.down)),
+                    allow_sharing=True,
+                    description="demo session",
+                )
+            ]
+        )
+    )
+    xml_string = model_dump_xml_string(model, data_root=True)
+
+    with Path("tests/examples/with_enums_defaults/expected.xml").open("r") as f:
+        expected_xml_string = f.read()
+
+    parser = etree.XMLParser(remove_blank_text=True)
+    generated_tree = etree.fromstring(xml_string.encode(), parser)
+    expected_tree = etree.fromstring(expected_xml_string.encode(), parser)
+
+    assert etree.tostring(generated_tree) == etree.tostring(expected_tree)
+
+
 def test_import_uses_xml_dump():
     from examples.with_import_uses.model import (
         Model,
