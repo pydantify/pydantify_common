@@ -1,6 +1,8 @@
 from pathlib import Path
-from pydantify_common.helper import model_dump_xml_string
+
 from lxml import etree
+
+from pydantify_common.helper import XmlWrapper, model_dump_xml_string
 
 
 def test_augment_xml_dump():
@@ -131,3 +133,45 @@ def test_import_uses_xml_dump():
     expected_tree = etree.fromstring(expected_xml_string.encode(), parser)
 
     assert etree.tostring(generated_tree) == etree.tostring(expected_tree)
+
+
+def test_wrappers_xml_dump():
+    from examples.with_enums_defaults.model import (
+        Model,
+        SessionsContainer,
+        SessionListEntry,
+        StateLeaf,
+        StateType,
+        StateEnum,
+        NS,
+    )
+
+    model = Model(
+        sessions=SessionsContainer(
+            session_list=[
+                SessionListEntry(
+                    id=10,
+                    config_state=StateLeaf(StateType(StateEnum.down)),
+                    description="test",
+                )
+            ]
+        )
+    )
+
+    xml_string = model_dump_xml_string(
+        model,
+        data_root=True,
+        wrappers=[
+            XmlWrapper("System", NS),
+            XmlWrapper("config", NS),
+        ],
+    )
+
+    parser = etree.XMLParser(remove_blank_text=True)
+    tree = etree.fromstring(xml_string.encode(), parser)
+
+    # Verify structure: <data><System><config><sessions>...
+    assert tree.tag == "{urn:ietf:params:xml:ns:netconf:base:1.0}data"
+    assert tree[0].tag == "{http://example.com/ns/yang/demo}System"
+    assert tree[0][0].tag == "{http://example.com/ns/yang/demo}config"
+    assert tree[0][0][0].tag == "{http://example.com/ns/yang/demo}sessions"
