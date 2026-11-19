@@ -6,6 +6,8 @@ A Python library providing common base classes and utilities for building Pydant
 
 - **Base Model Classes**: `PydantifyModel` and `XMLPydantifyModel` for creating structured data models
 - **XML Serialization**: Convert Pydantic models to XML with namespace support
+- **YANG-Compatible**: Handles `RootModel`, `Enum`, and `serialization_alias` for YANG-generated models
+- **Wrapper Elements**: Add outer YANG path wrappers (e.g., `System`, `config`) to serialized output
 - **NETCONF Compatibility**: Built-in support for NETCONF data root elements
 - **Type Safety**: Full type hints and Pydantic v2 support
 - **Flexible Output**: Pretty-print and custom root element options
@@ -29,14 +31,21 @@ pip install pydantify-common
 Make sure the pydantic model inherits from `XMLPydantifyModel` and defines `namespace` and `prefix` as class variables.
 
 ```python
+from typing import Annotated, ClassVar
+from pydantic import Field
 from pydantify_common.model import XMLPydantifyModel
 
 class MyModel(XMLPydantifyModel):
-    namespace = "http://example.com/schema"
-    prefix = "ex"
+    model_config = {"populate_by_name": True}
+    namespace: ClassVar[str] = "http://example.com/schema"
+    prefix: ClassVar[str] = "ex"
     
-    name: str
-    value: int
+    # Use serialization_alias for camelCase/hyphenated XML tags
+    device_name: Annotated[
+        str,
+        Field(serialization_alias="ex:deviceName")
+    ]
+    value: Annotated[int, Field(serialization_alias="ex:value")]
 ```
 
 ### XML Serialization
@@ -44,9 +53,9 @@ class MyModel(XMLPydantifyModel):
 ```python
 from pydantify_common.helper import model_dump_xml_string
 
-model = MyModel(name="test", value=42)
+model = MyModel(device_name="router1", value=42)
 xml_str = model_dump_xml_string(model, pretty_print=True)
-print(xml_str)
+# Output: <MyModel><deviceName>router1</deviceName><value>42</value></MyModel>
 ```
 
 ### NETCONF Data Root
@@ -54,6 +63,45 @@ print(xml_str)
 ```python
 # Add NETCONF-compatible data root element
 xml_str = model_dump_xml_string(model, pretty_print=True, data_root=True)
+```
+
+### Wrapper Elements
+
+```python
+from pydantify_common.helper import XmlWrapper
+
+# Wrap model in YANG path elements (e.g., System/config)
+xml_str = model_dump_xml_string(
+    model,
+    pretty_print=True,
+    data_root=True,
+    wrappers=[
+        XmlWrapper("System", "http://example.com/schema"),
+        XmlWrapper("config", "http://example.com/schema"),
+    ]
+)
+# Output: <data><System><config><MyModel>...</MyModel></config></System></data>
+```
+
+### NETCONF Operations
+
+Add NETCONF operation attributes (`operation="replace"`, etc.) by modifying the Element after serialization:
+
+```python
+from lxml import etree
+from pydantify_common import model_dump_xml
+
+# Get Element object
+element = model_dump_xml(model, data_root=True)
+
+# Add operation attribute to specific elements
+monitor_items = element.find('monitor-items')
+if monitor_items is not None:
+    monitor_items.set('operation', 'replace')
+
+# Serialize to string
+xml_str = etree.tostring(element, encoding=str, pretty_print=True)
+# Output: <monitor-items operation="replace">...</monitor-items>
 ```
 
 ## API Reference
@@ -72,23 +120,53 @@ class PydantifyModel(BaseModel):
 Extended base class with XML serialization capabilities.
 
 **Class Variables:**
-- `namespace` (str): XML namespace URI
-- `prefix` (str): XML namespace prefix
+- `namespace` (ClassVar[str]): XML namespace URI
+- `prefix` (ClassVar[str]): XML namespace prefix
 
 **Methods:**
 - `model_dump_xml() -> Element`: Returns an lxml Element representation
-- `fields_to_elements(container_name: str | None = None) -> Element`: Converts model fields to XML elements
+
+### XmlWrapper
+
+Named tuple for specifying wrapper elements.
+
+```python
+class XmlWrapper(NamedTuple):
+    tag: str        # Element tag name
+    namespace: str  # XML namespace URI
+```
+
+### model_dump_xml()
+
+Serialize model to lxml Element for direct manipulation.
+
+```python
+def model_dump_xml(
+    model: XMLPydantifyModel,
+    *,
+    data_root: bool = False,
+    wrappers: list[XmlWrapper] | None = None
+) -> Element
+```
+
+**Parameters:**
+- `model`: The XMLPydantifyModel instance to serialize
+- `data_root`: Add NETCONF-compatible `<data>` root element (default: False)
+- `wrappers`: Optional list of wrapper elements, specified outermost-first (default: None)
+
+**Returns:** lxml `Element` object
 
 ### model_dump_xml_string()
 
-Helper function to serialize XMLPydantifyModel instances to XML strings.
+Serialize model to XML string (calls `model_dump_xml()` internally).
 
 ```python
 def model_dump_xml_string(
     model: XMLPydantifyModel,
     *,
     pretty_print: bool = False,
-    data_root: bool = False
+    data_root: bool = False,
+    wrappers: list[XmlWrapper] | None = None
 ) -> str
 ```
 
@@ -96,6 +174,7 @@ def model_dump_xml_string(
 - `model`: The XMLPydantifyModel instance to serialize
 - `pretty_print`: Enable formatted XML output (default: False)
 - `data_root`: Add NETCONF-compatible `<data>` root element (default: False)
+- `wrappers`: Optional list of wrapper elements, specified outermost-first (default: None)
 
 **Returns:** XML string representation of the model
 
@@ -105,6 +184,7 @@ The project includes comprehensive examples in the `tests/examples/` directory:
 
 - **with_augment**: Demonstrates augmented YANG models with namespace support
 - **with_import_uses**: Shows handling of YANG imports and type reuse
+- **with_enums_defaults**: YANG-style `RootModel`, `Enum`, and default value handling
 
 Run tests to see examples in action:
 
